@@ -1,0 +1,8 @@
+*.py[co]
+*~
+#*#
+
+/MANIFEST
+/dist
+/build
+/old

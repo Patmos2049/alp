@@ -24,6 +24,10 @@
 
 version = (0, 1, 0)
 
+__doc__ = """\
+alp
+"""
+
 import sys
 from datetime import datetime, timedelta
 import re
@@ -123,8 +127,11 @@ salp: %d, talp: %d, second: %d}' % (self.alp, self.hexalp, self.qvalp,
                                  self.salp, self.talp, self.second)
 
 time = _AlpTime()
-update = time.update
-set_speed = time.set_speed
+def update(date=None):
+    time.update(date)
+
+def set_speed(speed):
+    time.set_speed(speed)
 
 ######################################################################
 
@@ -144,12 +151,17 @@ _formatter_control_regex = re.compile(r'!\((.+?)\)')
 _formatter_bg_color_regex = re.compile(r'#\((.+?)\)')
 _formatter_fg_color_regex = re.compile(r'\$\((.+?)\)')
 _formatter_codes_regex = re.compile(r'[!#\$]\(.+?\)')
+_formatter_not_all_codes_regex = re.compile(
+    r'([#\$]\(.+?\)|!\((bold|underline|blink|reverse)\))')
 
-def _no_formatting(text):
-    return _formatter_codes_regex.sub('', text)
+def unformat(text, also_control=True):
+    if also_control:
+        return _formatter_codes_regex.sub('', text)
+    else:
+        return _formatter_not_all_codes_regex.sub('', text)
 
 def _textlen(text):
-    return len(_no_formatting(text).decode('utf-8'))
+    return len(unformat(text).decode('utf-8'))
 
 class _BaseControls(object):
     """A generic text formatting generator"""
@@ -233,11 +245,13 @@ class _FakeCursesControls(_BaseControls):
 
 formatter = None
 def start_formatter(use_curses=True):
-    global formatter, start_formatter
+    global formatter, start_formatter, _using_curses
     if not _has_curses or not use_curses:
+        _using_curses = False
         formatter = _FakeCursesControls()
     else:
         formatter = _CursesControls()
+        _using_curses = True
     start_formatter = lambda *arg: True
     return formatter
 
@@ -288,23 +302,23 @@ def get_date_text(date_format=None):
 
 ######################################################################
 
-# Virtual LEDs
-_led_letters = 'abcdefghijklmnopqrs'
+# Virtual LEDs creating a clock
+_clock_letters = 'abcdefghijklmnopqrs'
 
-_default_led_layout = '''\
+_default_clock_layout = '''\
    a  b  c  d
 e  g  h  i  j
 f  k  l  m  n
 o  p  q  r  s\
 '''
 
-_default_led_controls = '#(yellow)'
+_default_clock_controls = '#(yellow)'
 
 class _Container(object):
     pass
 
-class _Led(object):
-    """A simulation of a LED lamp"""
+class _Lamp(object):
+    """A simulation of a simple lamp"""
     def __init__(self, **kwds):
         self.items = {
             True: _Container(), False: _Container()}
@@ -344,37 +358,37 @@ class _Led(object):
             text += '!(normal)'
         return text
 
-_led_formatting = {
-    'a': _Led(bg='yellow', fg='green', letter0='·', letter1='O', controls=['bold']),
-    'b': _Led(bg='yellow', fg='green', letter0='·', letter1='O', controls=['bold']),
-    'c': _Led(bg='yellow', fg='green', letter0='·', letter1='O', controls=['bold']),
-    'd': _Led(bg='yellow', fg='green', letter0='·', letter1='O', controls=['bold']),
-    'e': _Led(bg='magenta', fg='cyan', letter0='.', letter1='#', controls=['bold']),
-    'f': _Led(bg='magenta', fg='cyan', letter0='.', letter1='#', controls=['bold']),
-    'g': _Led(bg='black', fg='red', letter0='·', letter1='o', controls=['bold']),
-    'h': _Led(bg='black', fg='red', letter0='·', letter1='o', controls=['bold']),
-    'i': _Led(bg='black', fg='red', letter0='·', letter1='o', controls=['bold']),
-    'j': _Led(bg='black', fg='red', letter0='·', letter1='o', controls=['bold']),
-    'k': _Led(bg='blue', fg='red', letter0='·', letter1='o', controls=['bold']),
-    'l': _Led(bg='blue', fg='red', letter0='·', letter1='o', controls=['bold']),
-    'm': _Led(bg='blue', fg='red', letter0='·', letter1='o', controls=['bold']),
-    'n': _Led(bg='blue', fg='red', letter0='·', letter1='o', controls=['bold']),
-    'o': _Led(bg='yellow', fg='white', letter0='·', letter1='>', controls=['bold']),
-    'p': _Led(bg='yellow', fg='white', letter0='·', letter1='>', controls=['bold']),
-    'q': _Led(bg='yellow', fg='white', letter0='·', letter1='>', controls=['bold']),
-    'r': _Led(bg='yellow', fg='white', letter0='·', letter1='>', controls=['bold']),
-    's': _Led(bg='yellow', fg='white', letter0='·', letter1='>', controls=['bold']),
-    '*': _Led(letter0='.', letter1='o') # For eventual non-defined letters
+_clock_formatting = {
+    'a': _Lamp(bg='yellow', fg='green', letter0='·', letter1='O', controls=['bold']),
+    'b': _Lamp(bg='yellow', fg='green', letter0='·', letter1='O', controls=['bold']),
+    'c': _Lamp(bg='yellow', fg='green', letter0='·', letter1='O', controls=['bold']),
+    'd': _Lamp(bg='yellow', fg='green', letter0='·', letter1='O', controls=['bold']),
+    'e': _Lamp(bg='magenta', fg='cyan', letter0='·', letter1='#', controls=['bold']),
+    'f': _Lamp(bg='magenta', fg='cyan', letter0='·', letter1='#', controls=['bold']),
+    'g': _Lamp(bg='black', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'h': _Lamp(bg='black', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'i': _Lamp(bg='black', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'j': _Lamp(bg='black', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'k': _Lamp(bg='blue', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'l': _Lamp(bg='blue', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'm': _Lamp(bg='blue', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'n': _Lamp(bg='blue', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'o': _Lamp(bg='yellow', fg='white', letter0='·', letter1='>', controls=['bold']),
+    'p': _Lamp(bg='yellow', fg='white', letter0='·', letter1='>', controls=['bold']),
+    'q': _Lamp(bg='yellow', fg='white', letter0='·', letter1='>', controls=['bold']),
+    'r': _Lamp(bg='yellow', fg='white', letter0='·', letter1='>', controls=['bold']),
+    's': _Lamp(bg='yellow', fg='white', letter0='·', letter1='>', controls=['bold']),
+    '*': _Lamp(letter0='.', letter1='o') # For eventual non-defined letters
 }
 
-_led_states = {}
+_clock_states = {}
 
 def _set_states_from_hex(unit_time, *var):
-    global _led_states
+    global _clock_states
     for i in range(len(var) - 1, -1, -1):
         t = unit_time / 2**i
         unit_time -= t * 2**i
-        _led_states[var[i]] = bool(t)
+        _clock_states[var[i]] = bool(t)
 
 def _get_states_from_hex(unit_time, w=4):
     num = []
@@ -385,8 +399,8 @@ def _get_states_from_hex(unit_time, w=4):
     num.reverse()
     return num
 
-def update_leds():
-    global _led_states
+def update_clocks():
+    global _clock_states
     _set_states_from_hex(time.hexalp, 'a', 'b', 'c', 'd')
     _set_states_from_hex(time.qvalp, 'e', 'f')
     _set_states_from_hex(time.salp, 'g', 'h', 'i', 'j')
@@ -405,32 +419,32 @@ def update_leds():
     val_b = not O and Q[2] and not Q[3] or Q[3] and (O or Q[2])
     val_a = Q[3] or Q[2] and O
 
-    _led_states['o'] = val_e
-    _led_states['p'] = val_d
-    _led_states['q'] = val_c
-    _led_states['r'] = val_b
-    _led_states['s'] = val_a
+    _clock_states['o'] = val_e
+    _clock_states['p'] = val_d
+    _clock_states['q'] = val_c
+    _clock_states['r'] = val_b
+    _clock_states['s'] = val_a
 
-def _get_led_formatting(obj):
+def _get_clock_formatting(obj):
     obj = obj.groups(1)[0]
     try:
-        return _led_formatting[obj].generate(_led_states[obj])
+        return _clock_formatting[obj].generate(_clock_states[obj])
     except KeyError:
-        return _led_formatting['*'].generate(_led_states[obj])
+        return _clock_formatting['*'].generate(_clock_states[obj])
 
-def get_led_text(led_layout=None):
-    if led_layout is None:
-        led_layout = _default_led_layout
+def get_clock_text(clock_layout=None):
+    if clock_layout is None:
+        clock_layout = _default_clock_layout
 
-    led_layout = re.sub(r'([' + _led_letters + '])',
-                        lambda obj: _get_led_formatting(obj) \
-                            + _default_led_controls, led_layout)
+    clock_layout = re.sub(r'([' + _clock_letters + '])',
+                        lambda obj: _get_clock_formatting(obj) \
+                            + _default_clock_controls, clock_layout)
 
-    text = _default_led_controls + led_layout.replace(
-        '\n', '!(normal)\n' + _default_led_controls) + '!(normal)'
+    text = _default_clock_controls + clock_layout.replace(
+        '\n', '!(normal)\n' + _default_clock_controls) + '!(normal)'
     return text
 
-update_leds()
+update_clocks()
 
 ######################################################################
 
@@ -464,16 +478,34 @@ def get_gregorian_date_text(date_format=None):
 
 def update_all(date=None):
     update(date)
-    update_leds()
+    update_clocks()
 
 def print_time(**kwds):
     date_format=kwds.get('date_format')
     greg_date_format=kwds.get('greg_date_format')
-    led_layout = kwds.get('led_layout')
+    clock_layout = kwds.get('clock_layout')
     date = kwds.get('date') or datetime.now()
     show = kwds.get('show') or ['datetime']
-    use_formatting = kwds.get('formatting') or True
+    use_formatting = kwds.get('formatting')
+    if use_formatting is None:
+        use_formatting = True
     be_continous = kwds.get('continous') or False
+
+    def _print_part():
+        t = ''
+        for x in show:
+            if x == 'datetime':
+                date_text = get_date_text(date_format)
+                t += '\n\n' + date_text
+            elif x == 'gregdatetime':
+                greg_date_text = get_gregorian_date_text(greg_date_format)
+                t += '\n\n' + greg_date_text
+            elif x == 'clock':
+                update_clocks()
+                clock_text = get_clock_text(clock_layout)
+                t += '\n\n' + clock_text
+        t = t.strip()
+        return t + '!(normal)'
     
     start_formatter()
     formatter.generate('!(hide_cursor)', True)
@@ -481,23 +513,34 @@ def print_time(**kwds):
     update()
     prev = time.seconds_since_epoch
 
+    if not be_continous:
+        text = _print_part()
+        text = text.replace('\n', '!(normal)\n') + '!(normal)'
+        if not use_formatting:
+            text = unformat(text, False)
+        text = formatter.generate(text)
+        if _using_curses:
+            print text
+        else:
+            print text,
+        return
+
     go_up = 0
     try:
         while True:
             update()
             now = time.seconds_since_epoch
             if now > prev:
-                date_text = get_date_text(date_format)
-                greg_date_text = get_gregorian_date_text(greg_date_format)
-                update_leds()
-                led_text = get_led_text(led_layout)
-#                led_pure_text = _no_formatting(led_text)
-                text = '!(up)' * go_up + '!(up)\n' + date_text + \
-                    '!(normal)\n\n' + greg_date_text + \
-                    '!(normal)\n\n' + led_text + '!(up)!(down)'
+                if _using_curses:
+                    text = '!(up)' * go_up + '!(up)\n' + \
+                        _print_part() + '!(up)!(down)'
+                else:
+                    text = _print_part() + '\n\n'
+                text = text.replace('\n', '!(normal)\n') + '!(normal)'
+                go_up = text.count('\n') - 1
+                if not use_formatting:
+                    text = unformat(text, False)
                 formatter.generate(text, True)
-                go_up = (date_text + greg_date_text +
-                         led_text).count('\n') + 4
 
                 prev = now
             sleep_time = 0.5 / time.speed
@@ -514,15 +557,16 @@ if __name__ == '__main__':
     from optparse import OptionParser
     parser = OptionParser(
         usage='Usage: %prog [options] [date]',
-    description='An Alp time display program',
-    version=version,
-    epilog='The date format is "GRE:year,month,day,hour,minute,second" \
-    if you specify a date from the Gregorian calendar, or \
-    "ALP:alp,hexalp,qvalp,salp,talp,second" if you specify a date \
-    using the Alp units. If no date is given, it defaults to "now"')
+        description='An Alp time display program',
+        version=version,
+        epilog='The date format is "GRE:year,month,day,hour,minute,second" \
+if you specify a date from the Gregorian calendar, or \
+"ALP:alp,hexalp,qvalp,salp,talp,second" if you specify a date \
+using the Alp units. If no date is given, it defaults to "now"')
     parser.add_option('-s', '--show', dest='show', metavar='TYPE', action='append',
                       help='choose which types of displays to show. You \
-can choose between "datetime", "clock", and "gregdate". This setting can \
+can choose between "datetime" (or "1"), "clock" (or "2"), and \
+"gregdatetime" (or "3"). You can also set it to "all". This setting can \
 be specified more than once, but if it isn\'t given at all, only \
 "datetime" is shown')
     parser.add_option('-c', '--continous', dest='continous',
@@ -533,6 +577,9 @@ print it again and again until you interrupt it')
                       action='store_false', default=True,
                       help='don\'t attempt to format strings (i.e. using \
 colors and making the text bold)')
+    parser.add_option('--no-curses', dest='use_curses',
+                      action='store_false', default=True,
+                      help='do not attempt to use the curses library')
     parser.add_option('--debug-speed', dest='debug_speed',
                       metavar='SPEED', type='int',
                       help='change the speed (default is 1; setting it to \
@@ -551,25 +598,36 @@ a higher value makes it go faster).')
         if typ == 'gre':
             date = datetime(*date)
         else:
-            time = date[0] * _one_alp + date[1] * _hexalp_divide + \
+            secs = date[0] * _one_alp + date[1] * _hexalp_divide + \
                 date[2] * _qvalp_divide + date[3] * _salp_divide + \
                 date[4] * _talp_divide + date[5]
-            date = _epoch + timedelta(seconds=time)
+            date = _epoch + timedelta(seconds=secs)
     except IndexError:
         date = datetime.now()
 
     if options.show is None:
         options.show = ['datetime']
+    elif 'all' in options.show:
+        options.show = ['datetime', 'clock', 'gregdatetime']
+    else:
+        for i in range(len(options.show)):
+            if options.show[i] == '1':
+                options.show[i] = 'datetime'
+            elif options.show[i] == '2':
+                options.show[i] = 'clock'
+            elif options.show[i] == '3':
+                options.show[i] = 'gregdatetime'
 
     if options.debug_speed is not None:
         set_speed(options.debug_speed)
 
-    print date
-    start_formatter()
+    start_formatter(options.use_curses)
     try:
         print_time(date=date, show=options.show,
                    formatting=options.formatting,
                    continous=options.continous)
     except (KeyboardInterrupt, EOFError):
+        pass
+    finally:
         formatter.end()
 

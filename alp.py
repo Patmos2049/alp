@@ -1,16 +1,41 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# alp: an Alp time display program
+# Copyright (C) 2010  Niels Serup
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Version:...... 0.1.0
+# Maintainer:... Niels Serup <ns@metanohi.org>
+# Website:...... http://metanohi.org/projects/alp/
+# Development:.. http://gitorious.org/Alp
+
+version = (0, 1, 0)
+
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 import time as time_module
 try:
     import curses
+    _has_curses = True
 except ImportError:
-    curses = None
+    _has_curses = False
 try:
     import termcolor
+    _has_termcolor = True
     colored_orig = termcolor.colored
     _normal_esc_seq = colored_orig('>', 'grey').split('>')[1]
     def _colored(color, typ):
@@ -33,14 +58,14 @@ try:
             else:
                 return ''
 except ImportError:
-    termcolor = None
-    colored = lambda color, typ: ''
-    formatted = lambda typ: ''
+    _has_termcolor = False
+    _colored = lambda color, typ: ''
+    _formatted = lambda typ: ''
 
 ######################################################################
 
 # Basic constants
-_epoch = datetime(2009, 10, 8, 13, 1, 34)
+_epoch = datetime(2011, 10, 8, 00, 00, 00)
 _one_alp = 2 ** 18
 _hexalp_divide = 2 ** 14
 _qvalp_divide = 2 ** 12
@@ -156,18 +181,20 @@ class _CursesControls(_BaseControls):
     """
 
     def __init__(self):
+        self.bg_colors = {}
+        self.fg_colors = {}
+        self.controls = {}
+        self.cols = 0
+        self.lines = 0
+
         if not sys.stdout.isatty():
             return
         try:
             curses.setupterm()
         except Exception, e:
-            print e
+            return
         bg_seq = curses.tigetstr('setab') or curses.tigetstr('setb') or ''
         fg_seq = curses.tigetstr('setaf') or curses.tigetstr('setf') or ''
-
-        self.bg_colors = {}
-        self.fg_colors = {}
-        self.controls = {}
 
         # Get escape sequences
         for color in _curses_colors:
@@ -207,7 +234,7 @@ class _FakeCursesControls(_BaseControls):
 formatter = None
 def start_formatter(use_curses=True):
     global formatter, start_formatter
-    if curses is None or not use_curses:
+    if not _has_curses or not use_curses:
         formatter = _FakeCursesControls()
     else:
         formatter = _CursesControls()
@@ -233,17 +260,6 @@ $(red)&(salp#)\
 &(talp#)\
 $(white)&(second#)'
          # e.g. 2403/93EC2
-
-_default_dec_date_format = '\
-!(bold)#(black)$(yellow)ALP\
-#(cyan)$(yellow)&(alp_4)\
-#(blue)$(white)/\
-#(black)$(green)&(hexalp_2)\
-$(cyan)&(qvalp)\
-$(red)&(salp_2)\
-&(talp_2)\
-$(white)&(second_2)'
-         # e.g. 2403/093141202
 
 _date_format_unit_regex = re.compile(r'&\((.+?)\)')
 
@@ -333,16 +349,16 @@ _led_formatting = {
     'b': _Led(bg='yellow', fg='green', letter0='·', letter1='O', controls=['bold']),
     'c': _Led(bg='yellow', fg='green', letter0='·', letter1='O', controls=['bold']),
     'd': _Led(bg='yellow', fg='green', letter0='·', letter1='O', controls=['bold']),
-    'e': _Led(bg='magenta', fg='cyan', letter0='.', letter1='0', controls=['bold']),
-    'f': _Led(bg='magenta', fg='cyan', letter0='.', letter1='0', controls=['bold']),
-    'g': _Led(bg='black', fg='red', letter0=',', letter1='o', controls=['bold']),
-    'h': _Led(bg='black', fg='red', letter0=',', letter1='o', controls=['bold']),
-    'i': _Led(bg='black', fg='red', letter0=',', letter1='o', controls=['bold']),
-    'j': _Led(bg='black', fg='red', letter0=',', letter1='o', controls=['bold']),
-    'k': _Led(bg='blue', fg='red', letter0=',', letter1='o', controls=['bold']),
-    'l': _Led(bg='blue', fg='red', letter0=',', letter1='o', controls=['bold']),
-    'm': _Led(bg='blue', fg='red', letter0=',', letter1='o', controls=['bold']),
-    'n': _Led(bg='blue', fg='red', letter0=',', letter1='o', controls=['bold']),
+    'e': _Led(bg='magenta', fg='cyan', letter0='.', letter1='#', controls=['bold']),
+    'f': _Led(bg='magenta', fg='cyan', letter0='.', letter1='#', controls=['bold']),
+    'g': _Led(bg='black', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'h': _Led(bg='black', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'i': _Led(bg='black', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'j': _Led(bg='black', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'k': _Led(bg='blue', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'l': _Led(bg='blue', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'm': _Led(bg='blue', fg='red', letter0='·', letter1='o', controls=['bold']),
+    'n': _Led(bg='blue', fg='red', letter0='·', letter1='o', controls=['bold']),
     'o': _Led(bg='yellow', fg='white', letter0='·', letter1='>', controls=['bold']),
     'p': _Led(bg='yellow', fg='white', letter0='·', letter1='>', controls=['bold']),
     'q': _Led(bg='yellow', fg='white', letter0='·', letter1='>', controls=['bold']),
@@ -412,7 +428,7 @@ def get_led_text(led_layout=None):
 
     text = _default_led_controls + led_layout.replace(
         '\n', '!(normal)\n' + _default_led_controls) + '!(normal)'
-    return formatter.generate(text), _no_formatting(led_layout)
+    return text
 
 update_leds()
 
@@ -450,10 +466,18 @@ def update_all(date=None):
     update(date)
     update_leds()
 
-def print_time_continously(date_format=None, greg_date_format=None,
-                           led_layout=None):
+def print_time(**kwds):
+    date_format=kwds.get('date_format')
+    greg_date_format=kwds.get('greg_date_format')
+    led_layout = kwds.get('led_layout')
+    date = kwds.get('date') or datetime.now()
+    show = kwds.get('show') or ['datetime']
+    use_formatting = kwds.get('formatting') or True
+    be_continous = kwds.get('continous') or False
+    
     start_formatter()
     formatter.generate('!(hide_cursor)', True)
+
     update()
     prev = time.seconds_since_epoch
 
@@ -466,15 +490,14 @@ def print_time_continously(date_format=None, greg_date_format=None,
                 date_text = get_date_text(date_format)
                 greg_date_text = get_gregorian_date_text(greg_date_format)
                 update_leds()
-                led_text, led_pure_text = get_led_text(led_layout)
-                # ' ' *
-                #     (_textlen(led_pure_text.split('\n', 1)[0]) - _textlen(date_text))
-                text = \
-                    '!(up)' * go_up + '!(up)\n' + date_text \
-                    + '!(normal)\n' + greg_date_text + '!(normal)\n' + led_text
+                led_text = get_led_text(led_layout)
+#                led_pure_text = _no_formatting(led_text)
+                text = '!(up)' * go_up + '!(up)\n' + date_text + \
+                    '!(normal)\n\n' + greg_date_text + \
+                    '!(normal)\n\n' + led_text + '!(up)!(down)'
                 formatter.generate(text, True)
                 go_up = (date_text + greg_date_text +
-                         led_text).count('\n') + 2
+                         led_text).count('\n') + 4
 
                 prev = now
             sleep_time = 0.5 / time.speed
@@ -488,10 +511,65 @@ def print_time_continously(date_format=None, greg_date_format=None,
 ######################################################################
 
 if __name__ == '__main__':
-    set_speed(128)
-    start_formatter(True)
+    from optparse import OptionParser
+    parser = OptionParser(
+        usage='Usage: %prog [options] [date]',
+    description='An Alp time display program',
+    version=version,
+    epilog='The date format is "GRE:year,month,day,hour,minute,second" \
+    if you specify a date from the Gregorian calendar, or \
+    "ALP:alp,hexalp,qvalp,salp,talp,second" if you specify a date \
+    using the Alp units. If no date is given, it defaults to "now"')
+    parser.add_option('-s', '--show', dest='show', metavar='TYPE', action='append',
+                      help='choose which types of displays to show. You \
+can choose between "datetime", "clock", and "gregdate". This setting can \
+be specified more than once, but if it isn\'t given at all, only \
+"datetime" is shown')
+    parser.add_option('-c', '--continous', dest='continous',
+                      action='store_true', default=False,
+                      help='Instead of printing the date just once, \
+print it again and again until you interrupt it')
+    parser.add_option('-F', '--no-formatting', dest='formatting',
+                      action='store_false', default=True,
+                      help='don\'t attempt to format strings (i.e. using \
+colors and making the text bold)')
+    parser.add_option('--debug-speed', dest='debug_speed',
+                      metavar='SPEED', type='int',
+                      help='change the speed (default is 1; setting it to \
+a higher value makes it go faster).')
+
+    options, args = parser.parse_args()
+
     try:
-        print_time_continously()
+        date = args[0].lower().split(':')
+        typ = date[0]
+        date = date[1].split(',')
+        if typ == 'alp':
+            date = [int(x, 16) for x in date]
+        else:
+            date = [int(x) for x in date]
+        if typ == 'gre':
+            date = datetime(*date)
+        else:
+            time = date[0] * _one_alp + date[1] * _hexalp_divide + \
+                date[2] * _qvalp_divide + date[3] * _salp_divide + \
+                date[4] * _talp_divide + date[5]
+            date = _epoch + timedelta(seconds=time)
+    except IndexError:
+        date = datetime.now()
+
+    if options.show is None:
+        options.show = ['datetime']
+
+    if options.debug_speed is not None:
+        set_speed(options.debug_speed)
+
+    print date
+    start_formatter()
+    try:
+        print_time(date=date, show=options.show,
+                   formatting=options.formatting,
+                   continous=options.continous)
     except (KeyboardInterrupt, EOFError):
         formatter.end()
 

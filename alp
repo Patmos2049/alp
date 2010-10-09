@@ -624,6 +624,8 @@ a higher value makes it go faster).')
     try:
         from setproctitle import setproctitle
         setproctitle('alp')
+    except ImportError:
+        pass
 
     start_formatter(options.use_curses)
     try:

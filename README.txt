@@ -1,0 +1,91 @@
+
+============
+Alp software
+============
+
+**No release out yet**
+
+The Alp is a new unit meant for measuring time. To understand and use
+this unit, the program included in this distribution has been
+created. It's both a command-line tool, named "alp", and a Python
+module.
+
+
+License
+=======
+
+Alp software is free software under the terms of the GNU General
+Public License version 3 (or any later version). The author of Alp
+software is Niels Serup, contactable at ns@metanohi.org. This is
+version 0.1.0 of the program.
+
+The libraries used by Alp software are GPL-compatible.
+
+
+Installing
+==========
+
+The Alp program and module is contained in a single file. It is not
+necessary to install it, but it can make it easier to use the Alp
+software.
+
+Way #1
+------
+Just run this (requires that you have python-setuptools installed)::
+
+  $ sudo easy_install Alp
+
+Way #2
+------
+Get the newest version of Alp at
+http://metanohi.org/projects/alp/ or at
+http://pypi.python.org/pypi/Alp
+
+Extract the downloaded file and run this in a terminal::
+
+  # python setup.py install
+
+Dependencies
+============
+
+Python 2.5+ is probably a requirement.
+
+For formatting and control codes, Alp will attempt to use ncurses. If
+that fails, Alp will try to use the Python termcolor module, available
+at http://pypi.python.org/pypi/termcolor/, installable using ``$ sudo
+easy_install termcolor`` (released under the GPLv3+).
+
+If present, Alp will also use the ``setproctitle`` Python module,
+available at http://pypi.python.org/pypi/setproctitle/, installable
+using ``$ sudo easy_install setproctitle`` (released under the New BSD
+License).
+
+
+Using
+=====
+
+When using the Alp software as a command-line tool, simply run
+``alp``. Run ``alp --help`` to see what options you can specify.
+
+When using it as a module, just use ``import alp`` in your Python
+program. To learn how the Alp module works, run ``pydoc alp`` or
+``python -c 'import alp; help(alp)'``.
+
+
+Developing
+==========
+
+Alp software is written in Python and uses Git for branches. To get the
+latest branch, get it from gitorious.org like this::
+
+  $ git clone git://gitorious.org/Alp/alp.git
+
+
+This document
+=============
+Copyright (C) 2010  Niels Serup
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.  This file is offered as-is,
+without any warranty.

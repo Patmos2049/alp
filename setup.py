@@ -12,7 +12,7 @@ conf = dict(
     scripts=['alp'],
     url='http://metanohi.org/projects/alp/',
     license='GPLv3+',
-    description='An Alp time display program',
+    description='Alp time tools',
     classifiers=['Development Status :: 4 - Beta',
                  'Intended Audience :: End Users/Desktop',
                  'Intended Audience :: Developers',

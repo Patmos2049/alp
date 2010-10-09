@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# alp: an Alp time display program
+# Alp software: Alp time tools
 # Copyright (C) 2010  Niels Serup
 
 # This program is free software: you can redistribute it and/or modify
@@ -81,16 +81,23 @@ class _AlpTime(object):
 
     def __init__(self):
         self.speed = 1
-        self.start_date = datetime.now()
+        self.set_start_date()
+
+    def set_start_date(self, date=None):
+        now = datetime.now()
+        if date is None:
+            date = now
+        self.start_date = date
         self.start_diff = self.start_date - _epoch
+        self.now_diff = self.start_date - now
         self.update()
 
-    def set_speed(self, speed):
+    def set_speed(self, speed=1):
         self.speed = speed
 
     def get_seconds_since_epoch(self, date=None):
         if date is None:
-            date = datetime.now()
+            date = datetime.now() + self.now_diff
         diff = self.start_diff + (date - self.start_date) * self.speed
         return diff.days * 86400 + diff.seconds, diff
 
@@ -113,24 +120,32 @@ class _AlpTime(object):
         second = seconds_left
 
         self.seconds_since_epoch = passed
-        self.alp = alp
-        self.seconds = seconds_total
-        self.hexalp = hexalp
-        self.qvalp = qvalp
-        self.salp = salp
-        self.talp = talp
-        self.second = second
+        self.alp = int(alp)
+        self.seconds = int(seconds_total)
+        self.hexalp = int(hexalp)
+        self.qvalp = int(qvalp)
+        self.salp = int(salp)
+        self.talp = int(talp)
+        self.second = int(second)
 
     def __str__(self):
         return 'AlpTime{alp: %d, hexalp: %d, qvalp: %d, \
-salp: %d, talp: %d, second: %d}' % (self.alp, self.hexalp, self.qvalp,
-                                 self.salp, self.talp, self.second)
+salp: %d, talp: %d, second: %d}' % \
+            (self.alp, self.hexalp, self.qvalp,
+             self.salp, self.talp, self.second)
 
 time = _AlpTime()
+
 def update(date=None):
+    """Update the internal time"""
     time.update(date)
 
-def set_speed(speed):
+def set_start_date(date=None):
+    """Set the start date (using Python's datetime module)"""
+    time.set_start_date(date)
+
+def set_speed(speed=1):
+    """Set the debug speed"""
     time.set_speed(speed)
 
 ######################################################################
@@ -154,8 +169,9 @@ _formatter_codes_regex = re.compile(r'[!#\$]\(.+?\)')
 _formatter_not_all_codes_regex = re.compile(
     r'([#\$]\(.+?\)|!\((bold|underline|blink|reverse)\))')
 
-def unformat(text, also_control=True):
-    if also_control:
+def unformat(text, also_controls=True):
+    """Remove formatting codes from text"""
+    if also_controls:
         return _formatter_codes_regex.sub('', text)
     else:
         return _formatter_not_all_codes_regex.sub('', text)
@@ -163,7 +179,7 @@ def unformat(text, also_control=True):
 def _textlen(text):
     return len(unformat(text).decode('utf-8'))
 
-class _BaseControls(object):
+class BaseFormatter(object):
     """A generic text formatting generator"""
 
     def _generate_part(self, attr, obj):
@@ -183,10 +199,10 @@ class _BaseControls(object):
     def clear(self):
         self.generate('!(clear_eol)', True)
 
-    def end(self):
+    def _end(self):
         pass
 
-class _CursesControls(_BaseControls):
+class _CursesControls(BaseFormatter):
     """
     A text formatting generator and a container of curses escape
     sequences
@@ -223,10 +239,10 @@ class _CursesControls(_BaseControls):
     def _generate_part(self, attr, obj):
         return self.__getattribute__(attr)[obj.groups(1)[0]]
 
-    def end(self):
+    def _end(self):
         print formatter.generate('!(normal)!(show_cursor)!(up)')
 
-class _FakeCursesControls(_BaseControls):
+class _FakeCursesControls(BaseFormatter):
     """A text formatting generator without curses"""
 
     def _generate_part(self, attr, obj):
@@ -240,11 +256,15 @@ class _FakeCursesControls(_BaseControls):
         # Else
         return ''
 
-    def end(self):
+    def _end(self):
         print formatter.generate('!(normal)')
 
 formatter = None
 def start_formatter(use_curses=True):
+    """
+    Start the formatter, making the global formatter variable into an
+    instance of a class related with the BaseFormatter class
+    """
     global formatter, start_formatter, _using_curses
     if not _has_curses or not use_curses:
         _using_curses = False
@@ -296,6 +316,7 @@ def _format_replace(obj):
         return str(value)
 
 def get_date_text(date_format=None):
+    """Get the Alp date in date_format"""
     if date_format is None:
         date_format = _default_hex_date_format
     return _date_format_unit_regex.sub(_format_replace, date_format)
@@ -399,7 +420,8 @@ def _get_states_from_hex(unit_time, w=4):
     num.reverse()
     return num
 
-def update_clocks():
+def update_clock():
+    """Update the internal representation of a physical Alp clock"""
     global _clock_states
     _set_states_from_hex(time.hexalp, 'a', 'b', 'c', 'd')
     _set_states_from_hex(time.qvalp, 'e', 'f')
@@ -433,6 +455,7 @@ def _get_clock_formatting(obj):
         return _clock_formatting['*'].generate(_clock_states[obj])
 
 def get_clock_text(clock_layout=None):
+    """Get a representation of a physical Alp clock"""
     if clock_layout is None:
         clock_layout = _default_clock_layout
 
@@ -444,7 +467,7 @@ def get_clock_text(clock_layout=None):
         '\n', '!(normal)\n' + _default_clock_controls) + '!(normal)'
     return text
 
-update_clocks()
+update_clock()
 
 ######################################################################
 
@@ -468,6 +491,7 @@ _default_gregorian_date_format = '\
 #(black)$(red)%S'
 
 def get_gregorian_date_text(date_format=None):
+    """Get the Gregorian date in date_format"""
     if date_format is None:
         date_format = _default_gregorian_date_format
     return time.real_date.strftime(date_format)
@@ -477,19 +501,26 @@ def get_gregorian_date_text(date_format=None):
 # Convenience functions
 
 def update_all(date=None):
+    """Update both internal time and clock representation"""
     update(date)
-    update_clocks()
+    update_clock()
 
-def print_time(**kwds):
-    date_format=kwds.get('date_format')
-    greg_date_format=kwds.get('greg_date_format')
-    clock_layout = kwds.get('clock_layout')
-    date = kwds.get('date') or datetime.now()
-    show = kwds.get('show') or ['datetime']
-    use_formatting = kwds.get('formatting')
+def print_time(date_format=None, greg_date_format=None,
+               clock_layout=None, date=None, show=None,
+               formatting=None, continous=None, **kwds):
+    """
+    Print the time in different ways. All arguments can be given as
+    keyword arguments instead of ordinary arguments.
+    """
+    date_format = date_format or kwds.get('date_format')
+    greg_date_format = greg_date_format or kwds.get('greg_date_format')
+    clock_layout = clock_layout or kwds.get('clock_layout')
+    date = date or kwds.get('date') or datetime.now()
+    show = show or kwds.get('show') or ['datetime']
+    use_formatting = formatting or kwds.get('formatting')
     if use_formatting is None:
         use_formatting = True
-    be_continous = kwds.get('continous') or False
+    be_continous = continous or kwds.get('continous') or False
 
     def _print_part():
         t = ''
@@ -501,7 +532,7 @@ def print_time(**kwds):
                 greg_date_text = get_gregorian_date_text(greg_date_format)
                 t += '\n\n' + greg_date_text
             elif x == 'clock':
-                update_clocks()
+                update_clock()
                 clock_text = get_clock_text(clock_layout)
                 t += '\n\n' + clock_text
         t = t.strip()
@@ -531,6 +562,7 @@ def print_time(**kwds):
             update()
             now = time.seconds_since_epoch
             if now > prev:
+                prev = now
                 if _using_curses:
                     text = '!(up)' * go_up + '!(up)\n' + \
                         _print_part() + '!(up)!(down)'
@@ -542,7 +574,6 @@ def print_time(**kwds):
                     text = unformat(text, False)
                 formatter.generate(text, True)
 
-                prev = now
             sleep_time = 0.5 / time.speed
             if sleep_time < 0.01:
                 sleep_time = 0.01
@@ -557,8 +588,12 @@ if __name__ == '__main__':
     from optparse import OptionParser
     parser = OptionParser(
         usage='Usage: %prog [options] [date]',
-        description='An Alp time display program',
-        version=version,
+        description='Alp time tools',
+        version='''Alp software %s
+Copyright (C) 2010  Niels Serup
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.''' % '.'.join(map(str, version)),
         epilog='The date format is "GRE:year,month,day,hour,minute,second" \
 if you specify a date from the Gregorian calendar, or \
 "ALP:alp,hexalp,qvalp,salp,talp,second" if you specify a date \
@@ -592,7 +627,10 @@ a higher value makes it go faster).')
         typ = date[0]
         date = date[1].split(',')
         if typ == 'alp':
-            date = [int(x, 16) for x in date]
+            date[0] = int(date[0])
+            for i in range(len(date) - 1):
+                date[i + 1] = int(date[i + 1], 16)
+
         else:
             date = [int(x) for x in date]
         if typ == 'gre':
@@ -628,6 +666,8 @@ a higher value makes it go faster).')
         pass
 
     start_formatter(options.use_curses)
+    set_start_date(date)
+
     try:
         print_time(date=date, show=options.show,
                    formatting=options.formatting,
@@ -635,5 +675,5 @@ a higher value makes it go faster).')
     except (KeyboardInterrupt, EOFError):
         pass
     finally:
-        formatter.end()
+        formatter._end()
 

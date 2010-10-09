@@ -621,6 +621,10 @@ a higher value makes it go faster).')
     if options.debug_speed is not None:
         set_speed(options.debug_speed)
 
+    try:
+        from setproctitle import setproctitle
+        setproctitle('alp')
+
     start_formatter(options.use_curses)
     try:
         print_time(date=date, show=options.show,

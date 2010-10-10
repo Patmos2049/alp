@@ -433,13 +433,13 @@ def update_clock():
     P = Q[2] ^ Q[3]
     R = not Q[2] and not Q[3]
 
-    val_e = not Q[0] and Q[1] and P or Q[0] and\
-        (Q[2] and Q[3] or not Q[1] and not Q[2] and not Q[3])
-    val_d = Q[1] and (not Q[0] and not P or Q[0]\
-                          and (not Q[2] and Q[3] or Q[2]))
-    val_c = Q[3] and (Q[2] or not O) or Q[0] and Q[1] and R
-    val_b = not O and Q[2] and not Q[3] or Q[3] and (O or Q[2])
-    val_a = Q[3] or Q[2] and O
+    val_e = (not Q[0] and Q[1] and P) or (Q[0] and \
+        ((Q[2] and Q[3]) or (not Q[1] and not Q[2] and not Q[3])))
+    val_d = Q[1] and ((not Q[0] and not P) or (Q[0] \
+                          and ((not Q[2] and Q[3]) or Q[2])))
+    val_c = (Q[3] and (Q[2] or not O)) or (Q[0] and Q[1] and R)
+    val_b = (not O and Q[2] and not Q[3]) or (Q[3] and (O or Q[2]))
+    val_a = Q[3] or (Q[2] and O)
 
     _clock_states['o'] = val_e
     _clock_states['p'] = val_d
@@ -507,7 +507,7 @@ def update_all(date=None):
 
 def print_time(date_format=None, greg_date_format=None,
                clock_layout=None, date=None, show=None,
-               formatting=None, continous=None, **kwds):
+               formatting=False, continous=None, **kwds):
     """
     Print the time in different ways. All arguments can be given as
     keyword arguments instead of ordinary arguments.
@@ -517,9 +517,11 @@ def print_time(date_format=None, greg_date_format=None,
     clock_layout = clock_layout or kwds.get('clock_layout')
     date = date or kwds.get('date') or datetime.now()
     show = show or kwds.get('show') or ['datetime']
-    use_formatting = formatting or kwds.get('formatting')
+    use_formatting = formatting
     if use_formatting is None:
-        use_formatting = True
+        use_formatting = kwds.get('formatting')
+        if use_formatting is None:
+            use_formatting = True
     be_continous = continous or kwds.get('continous') or False
 
     def _print_part():

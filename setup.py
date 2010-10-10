@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 from distutils.core import setup
+import os.path
+import tempfile
+
+alppy = open('alp.py')
+alpname = os.path.join(tempfile.gettempdir(), 'alp')
+alp = open(alpname, 'w')
+alp.write(alppy.read())
+alppy.close()
+alp.close()
 
 readme = open('README.txt').read()
 conf = dict(
@@ -9,7 +18,7 @@ conf = dict(
     author_email='ns@metanohi.org',
     package_dir={'': '.'},
     py_modules = ['alp'],
-    scripts=['alp'],
+    scripts=[alpname],
     url='http://metanohi.org/projects/alp/',
     license='GPLv3+',
     description='Alp time tools',

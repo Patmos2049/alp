@@ -69,7 +69,7 @@ except ImportError:
 ######################################################################
 
 # Basic constants
-_epoch = datetime(2011, 10, 8, 00, 00, 00)
+_epoch = datetime(2010, 10, 15, 12, 00, 00)
 _one_alp = 2 ** 18
 _hexalp_divide = 2 ** 14
 _qvalp_divide = 2 ** 12

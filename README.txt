@@ -25,15 +25,15 @@ The libraries used by Alp software are GPL-compatible.
 Installing
 ==========
 
-The Alp program and module is contained in a single file. It is not
-necessary to install it, but it can make it easier to use the Alp
-software.
+The Alp program and module is contained in a single file,
+``alp.py``. It is not necessary to install it, but it can make it
+easier to use the Alp software.
 
 Way #1
 ------
 Just run this (requires that you have python-setuptools installed)::
 
-  $ sudo easy_install Alp
+  # easy_install Alp
 
 Way #2
 ------
@@ -69,7 +69,8 @@ When using the Alp software as a command-line tool, simply run
 
 When using it as a module, just use ``import alp`` in your Python
 program. To learn how the Alp module works, run ``pydoc alp`` or
-``python -c 'import alp; help(alp)'``.
+``python -c 'import alp; help(alp)'``. There are also a couple of
+tests in the ``tests`` directory.
 
 
 Developing

@@ -3,14 +3,16 @@ from distutils.core import setup
 import os.path
 import tempfile
 
-alppy = open('alp.py')
+selfdir = os.path.dirname(os.path.realpath(__file__))
+
+alppy = open(os.path.join(selfdir, 'alp.py'))
 alpname = os.path.join(tempfile.gettempdir(), 'alp')
 alp = open(alpname, 'w')
 alp.write(alppy.read())
 alppy.close()
 alp.close()
 
-readme = open('README.txt').read()
+readme = open(os.path.join(selfdir, 'README.txt')).read()
 conf = dict(
     name='Alp',
     version='0.1.0',

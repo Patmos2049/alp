@@ -76,15 +76,24 @@ _qvalp_divide = 2 ** 12
 _salp_divide = 2 ** 8
 _talp_divide = 2 ** 4
 
-class _AlpTime(object):
+class AlpTime(object):
     """The Alp time object"""
+    seconds_since_epoch=None
+    seconds=None
+    alp=None
+    hexalp=None
+    qvalp=None
+    salp=None
+    talp=None
+    second=None
 
     def __init__(self):
         self.speed = 1
         self.set_start_date()
 
     def set_start_date(self, date=None):
-        now = datetime.now()
+        """Set the start date (using Python's datetime module)"""
+        now = datetime.utcnow()
         if date is None:
             date = now
         self.start_date = date
@@ -92,16 +101,27 @@ class _AlpTime(object):
         self.now_diff = self.start_date - now
         self.update()
 
+    def get_start_date(self):
+        """Get the start date"""
+        return self.start_date
+
     def set_speed(self, speed=1):
+        """Set the debug speed"""
         self.speed = speed
 
+    def get_speed(self):
+        """Get the debug speed"""
+        return self.speed
+
     def get_seconds_since_epoch(self, date=None):
+        """Get the number of seconds since epoch"""
         if date is None:
-            date = datetime.now() + self.now_diff
+            date = datetime.utcnow() + self.now_diff
         diff = self.start_diff + (date - self.start_date) * self.speed
         return diff.days * 86400 + diff.seconds, diff
 
     def update(self, date=None):
+        """Update the internal time"""
         passed, diff = self.get_seconds_since_epoch(date)
         self.date = self.start_date + diff
         self.real_date = self.start_date + diff - self.start_diff
@@ -134,7 +154,7 @@ salp: %d, talp: %d, second: %d}' % \
             (self.alp, self.hexalp, self.qvalp,
              self.salp, self.talp, self.second)
 
-time = _AlpTime()
+time = AlpTime()
 
 def update(date=None):
     """Update the internal time"""
@@ -148,6 +168,24 @@ def set_speed(speed=1):
     """Set the debug speed"""
     time.set_speed(speed)
 
+def get_seconds_since_epoch(date=None):
+    """Get the number of seconds since epoch"""
+    return time.get_seconds_since_epoch(date)
+
+def alp_to_datetime(alp, hexalp, qvalp, salp, talp, second):
+    """Return a datetime object of the given Alp date"""
+    date = [alp, hexalp, qvalp, salp, talp, second]
+    date[0] = int(date[0])
+    try:
+        for i in range(len(date) - 1):
+            date[i + 1] = int(date[i + 1], 16)
+    except TypeError:
+        pass
+    secs = date[0] * _one_alp + date[1] * _hexalp_divide + \
+        date[2] * _qvalp_divide + date[3] * _salp_divide + \
+        date[4] * _talp_divide + date[5]
+    return _epoch + timedelta(seconds=secs)
+
 ######################################################################
 
 # Using curses without initscr
@@ -155,11 +193,10 @@ _curses_colors = ('BLUE', 'GREEN', 'CYAN', 'RED', 'MAGENTA', 'YELLOW',
                   'WHITE', 'BLACK')
 
 _curses_controls = {
-    'bol': 'cr', 'up': 'cuu1', 'down': 'cud1', 'left': 'cub1',
-    'right': 'cuf1', 'clear_screen': 'clear', 'clear_eol': 'el',
-    'clear_bol': 'el1', 'clear_eos': 'ed', 'bold': 'bold', 'blink':
-    'blink', 'dim': 'dim', 'reverse': 'rev', 'underline': 'smul',
-    'normal': 'sgr0', 'hide_cursor': 'civis', 'show_cursor': 'cnorm'
+    'up': 'cuu1', 'down': 'cud1', 'left': 'cub1', 'right': 'cuf1',
+    'clear_screen': 'clear', 'clear_line': 'el', 'bold': 'bold', 'blink': 'blink', 'dim': 'dim',
+    'reverse': 'rev', 'underline': 'smul', 'normal': 'sgr0',
+    'hide_cursor': 'civis', 'show_cursor': 'cnorm'
 }
 
 _formatter_control_regex = re.compile(r'!\((.+?)\)')
@@ -186,6 +223,36 @@ class BaseFormatter(object):
         return ''
 
     def generate(self, text, put=False):
+        """
+        Generate formatted text according to these codes:
+
+        Foreground color codes: $(color) (e.g. $(green))
+        Background color codes: #(color) (e.g. #(red))
+        Formatting codes: !(code) (e.g. !(up))
+
+        You can use blue, green, cyan, red, magenta, yellow, white and
+        black as colors.
+
+        These are the formatting codes with their actions and curses
+        equivalents:
+        
+        code         | description          | in curses
+        -------------+----------------------+----------
+        up           | one line up          | cuu1
+        down         | one line down        | cud1
+        left         | one char left        | cub1
+        right        | one char right       | cuf1
+        clear_screen | clear screen         | clear
+        clear_line   | clear line           | el
+        bold         | bold text            | bold
+        blink        | blinking text        | blink
+        dim          | dim text             | dim
+        reverse      | reverse text         | rev
+        underline    | underline text       | smul
+        normal       | reset all formatting | sgr0
+        hide_cursor  | hide cursor          | civis
+        show_cursor  | show cursor          | cnorm
+        """
         text = _formatter_control_regex.sub(
             lambda obj: self._generate_part('controls', obj), text)
         text = _formatter_bg_color_regex.sub(
@@ -197,7 +264,8 @@ class BaseFormatter(object):
         return text
 
     def clear(self):
-        self.generate('!(clear_eol)', True)
+        """Clear line"""
+        self.generate('!(clear_line)', True)
 
     def _end(self):
         pass
@@ -515,7 +583,7 @@ def print_time(date_format=None, greg_date_format=None,
     date_format = date_format or kwds.get('date_format')
     greg_date_format = greg_date_format or kwds.get('greg_date_format')
     clock_layout = clock_layout or kwds.get('clock_layout')
-    date = date or kwds.get('date') or datetime.now()
+    date = date or kwds.get('date') or datetime.utcnow()
     show = show or kwds.get('show') or ['datetime']
     use_formatting = formatting
     if use_formatting is None:
@@ -581,14 +649,18 @@ def print_time(date_format=None, greg_date_format=None,
                 sleep_time = 0.01
             time_module.sleep(sleep_time)
     except KeyboardInterrupt:
-        formatter.generate('\n!(up)' + '!(clear_eol)!(up)' * go_up, True)
+        formatter.generate('\n!(up)' + '!(clear_line)!(up)' * go_up, True)
         raise KeyboardInterrupt()
 
 ######################################################################
 
 if __name__ == '__main__':
     from optparse import OptionParser
-    parser = OptionParser(
+    class XParser(OptionParser):
+        def format_epilog(self, formatter):
+            return self.epilog
+
+    parser = XParser(
         usage='Usage: %prog [options] [date]',
         description='Alp time tools',
         version='''Alp software %s
@@ -596,10 +668,27 @@ Copyright (C) 2010  Niels Serup
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.''' % '.'.join(map(str, version)),
-        epilog='The date format is "GRE:year,month,day,hour,minute,second" \
-if you specify a date from the Gregorian calendar, or \
-"ALP:alp,hexalp,qvalp,salp,talp,second" if you specify a date \
-using the Alp units. If no date is given, it defaults to "now"')
+        epilog='''
+The date format is "GRE:year,month,day,hour,minute,second"
+if you specify a date from the Gregorian calendar, or
+"ALP:alp,hexalp,qvalp,salp,talp,second" if you specify a date
+using the Alp units. If no date is given, it defaults to "now".
+
+Examples:
+
+  Show both the Alp time, the gregorian time, and an Alp clock
+    alp -s all -c
+
+  Show only the Alp time:
+    alp -c
+
+  Show once, then exit
+    alp
+
+  Continously show a clock with no formatting:
+    alp -c -F -s clock
+
+''')
     parser.add_option('-s', '--show', dest='show', metavar='TYPE', action='append',
                       help='choose which types of displays to show. You \
 can choose between "datetime" (or "1"), "clock" (or "2"), and \
@@ -629,21 +718,11 @@ a higher value makes it go faster).')
         typ = date[0]
         date = date[1].split(',')
         if typ == 'alp':
-            date[0] = int(date[0])
-            for i in range(len(date) - 1):
-                date[i + 1] = int(date[i + 1], 16)
-
-        else:
-            date = [int(x) for x in date]
-        if typ == 'gre':
+            date = alp_to_datetime(*date)
+        elif typ == 'gre':
             date = datetime(*date)
-        else:
-            secs = date[0] * _one_alp + date[1] * _hexalp_divide + \
-                date[2] * _qvalp_divide + date[3] * _salp_divide + \
-                date[4] * _talp_divide + date[5]
-            date = _epoch + timedelta(seconds=secs)
     except IndexError:
-        date = datetime.now()
+        date = datetime.utcnow()
 
     if options.show is None:
         options.show = ['datetime']

@@ -3,12 +3,13 @@
 Alp software
 ============
 
-**No release out yet**
-
 The Alp is a new unit meant for measuring time. To understand and use
 this unit, the program included in this distribution has been
 created. It's both a command-line tool, named "alp", and a Python
 module.
+
+You can learn about the Alp unit and download documentation about it
+at http://metanohi.org/projects/alp/
 
 
 License

@@ -1,1 +1,4 @@
+v0.1.1, 2010-11-05 -- Fixed bug that prevented command-line convertion
+                      from Gregorian dates to Alp time
+
 v0.1.0, 2010-11-03 -- Initial release

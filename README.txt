@@ -18,7 +18,7 @@ License
 Alp software is free software under the terms of the GNU General
 Public License version 3 (or any later version). The author of Alp
 software is Niels Serup, contactable at ns@metanohi.org. This is
-version 0.1.0 of the program.
+version 0.1.1 of the program.
 
 The libraries used by Alp software are GPL-compatible.
 

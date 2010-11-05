@@ -720,7 +720,7 @@ a higher value makes it go faster).')
         if typ == 'alp':
             date = alp_to_datetime(*date)
         elif typ == 'gre':
-            date = datetime(*date)
+            date = datetime(*map(int, date))
     except IndexError:
         date = datetime.utcnow()
 

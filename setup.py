@@ -15,7 +15,7 @@ alp.close()
 readme = open(os.path.join(selfdir, 'README.txt')).read()
 conf = dict(
     name='Alp',
-    version='0.1.0',
+    version='0.1.1',
     author='Niels Serup',
     author_email='ns@metanohi.org',
     package_dir={'': '.'},

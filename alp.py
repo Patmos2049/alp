@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Alp software: Alp time tools
-# Copyright (C) 2010  Niels Serup
+# Copyright (C) 2010  Niels G. W. Serup
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Version:...... 0.1.0
-# Maintainer:... Niels Serup <ns@metanohi.org>
-# Website:...... http://metanohi.org/projects/alp/
+# Maintainer:... Niels G. W. Serup <ngws@metanohi.name>
+# Website:...... http://metanohi.name/projects/alp/
 # Development:.. http://gitorious.org/Alp
 
 version = (0, 1, 0)
@@ -664,7 +664,7 @@ if __name__ == '__main__':
         usage='Usage: %prog [options] [date]',
         description='Alp time tools',
         version='''Alp software %s
-Copyright (C) 2010  Niels Serup
+Copyright (C) 2010  Niels G. W. Serup
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.''' % '.'.join(map(str, version)),

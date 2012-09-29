@@ -9,7 +9,7 @@ created. It's both a command-line tool, named "alp", and a Python
 module.
 
 You can learn about the Alp unit and download documentation about it
-at http://metanohi.org/projects/alp/
+at http://metanohi.name/projects/alp/
 
 
 License
@@ -17,7 +17,7 @@ License
 
 Alp software is free software under the terms of the GNU General
 Public License version 3 (or any later version). The author of Alp
-software is Niels Serup, contactable at ns@metanohi.org. This is
+software is Niels G. W. Serup, contactable at ngws@metanohi.name. This is
 version 0.1.1 of the program.
 
 The libraries used by Alp software are GPL-compatible.
@@ -39,7 +39,7 @@ Just run this (requires that you have python-setuptools installed)::
 Way #2
 ------
 Get the newest version of Alp at
-http://metanohi.org/projects/alp/ or at
+http://metanohi.name/projects/alp/ or at
 http://pypi.python.org/pypi/Alp
 
 Extract the downloaded file and run this in a terminal::
@@ -85,7 +85,7 @@ latest branch, get it from gitorious.org like this::
 
 This document
 =============
-Copyright (C) 2010  Niels Serup
+Copyright (C) 2010  Niels G. W. Serup
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

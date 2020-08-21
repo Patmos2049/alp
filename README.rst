@@ -8,9 +8,6 @@ this unit, the program included in this distribution has been
 created. It's both a command-line tool, named "alp", and a Python
 module.
 
-You can learn about the Alp unit and download documentation about it
-at http://metanohi.name/projects/alp/
-
 
 License
 =======
@@ -30,19 +27,7 @@ The Alp program and module is contained in a single file,
 ``alp.py``. It is not necessary to install it, but it can make it
 easier to use the Alp software.
 
-Way #1
-------
-Just run this (requires that you have python-setuptools installed)::
-
-  # easy_install Alp
-
-Way #2
-------
-Get the newest version of Alp at
-http://metanohi.name/projects/alp/ or at
-http://pypi.python.org/pypi/Alp
-
-Extract the downloaded file and run this in a terminal::
+Run this in a terminal::
 
   # python setup.py install
 
@@ -72,15 +57,6 @@ When using it as a module, just use ``import alp`` in your Python
 program. To learn how the Alp module works, run ``pydoc alp`` or
 ``python -c 'import alp; help(alp)'``. There are also a couple of
 tests in the ``tests`` directory.
-
-
-Developing
-==========
-
-Alp software is written in Python and uses Git for branches. To get the
-latest branch, get it from gitorious.org like this::
-
-  $ git clone git://gitorious.org/Alp/alp.git
 
 
 This document
